@@ -24,4 +24,11 @@ export const api = {
 
     // Missed Calls
     getMissedCalls: () => get('/missed-calls'),
+
+    // Pending Calls
+    getPendingCalls: () => get('/pending-calls'),
+
+    // Companies
+    getCompanies: () => get('/companies'),
+    getCompanyById: (id) => get(`/companies/${encodeURIComponent(id)}`),
 };

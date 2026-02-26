@@ -1,9 +1,20 @@
 import { callStatusLabel, callStatusBadge } from '../utils/helpers';
 
-export function StatusBadge({ status }) {
+export function StatusBadge({ status, notificationCount }) {
+    let label = callStatusLabel(status);
+    let badgeClass = callStatusBadge(status);
+
+    if (status === 3 && notificationCount > 0) {
+        label = 'Missed';
+        badgeClass = 'badge-red'; // Keep it red for missed
+    } else if (status === 3) {
+        label = 'Cancelled';
+        badgeClass = 'badge-gray'; // Use gray for cancelled (user just closed)
+    }
+
     return (
-        <span className={`badge ${callStatusBadge(status)}`}>
-            {callStatusLabel(status)}
+        <span className={`badge ${badgeClass}`}>
+            {label}
         </span>
     );
 }

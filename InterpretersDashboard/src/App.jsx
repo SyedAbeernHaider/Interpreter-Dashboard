@@ -7,6 +7,9 @@ import { InterpreterDetails } from './pages/InterpreterDetails';
 import { Customers } from './pages/Customers';
 import { CustomerDetails } from './pages/CustomerDetails';
 import { MissedCalls } from './pages/MissedCalls';
+import { Companies } from './pages/Companies';
+import { CompanyDetails } from './pages/CompanyDetails';
+import { PendingCalls } from './pages/PendingCalls';
 import './index.css';
 
 function App() {
@@ -23,6 +26,9 @@ function App() {
             <Route path="/customers" element={<Customers />} />
             <Route path="/customers/:id" element={<CustomerDetails />} />
             <Route path="/missed-calls" element={<MissedCalls />} />
+            <Route path="/pending-calls" element={<PendingCalls />} />
+            <Route path="/companies" element={<Companies />} />
+            <Route path="/companies/:id" element={<CompanyDetails />} />
           </Routes>
         </div>
       </div>

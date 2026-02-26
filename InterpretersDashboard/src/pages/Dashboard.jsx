@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useApi } from '../hooks/useApi';
 import { api } from '../api/api';
 import { formatDateTime, timeAgo } from '../utils/helpers';
@@ -8,17 +9,25 @@ import {
     Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts';
 
-const COLORS_PIE = ['#10b981', '#f59e0b', '#4b5a72'];
+const COLORS_PIE = ['#10b981', '#fb923c', '#6366f1'];
 
-function StatCard({ icon, label, value, color, sub }) {
+function StatCard({ icon, label, value, color, onClick }) {
     return (
-        <div className="stat-card fade-in">
+        <div
+            className={`stat-card fade-in ${onClick ? 'clickable' : ''}`}
+            onClick={onClick}
+            style={onClick ? { cursor: 'pointer' } : {}}
+        >
             <div className={`stat-icon ${color}`}>{icon}</div>
             <div className="stat-info">
                 <div className="stat-value">{value ?? '—'}</div>
                 <div className="stat-label">{label}</div>
-                {sub && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{sub}</div>}
             </div>
+            {onClick && (
+                <div style={{ position: 'absolute', top: 12, right: 12, color: 'var(--text-muted)', opacity: 0.5 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+                </div>
+            )}
         </div>
     );
 }
@@ -26,11 +35,11 @@ function StatCard({ icon, label, value, color, sub }) {
 function CustomTooltip({ active, payload, label }) {
     if (!active || !payload?.length) return null;
     return (
-        <div className="tooltip-custom">
-            <div className="label">{label}</div>
+        <div className="recharts-default-tooltip">
+            <div className="recharts-tooltip-label" style={{ marginBottom: 8, fontWeight: 700 }}>{label}</div>
             {payload.map(p => (
-                <div key={p.name} style={{ color: p.color, marginTop: 2 }}>
-                    {p.name}: <strong>{p.value}</strong>
+                <div key={p.name} style={{ color: p.color, fontSize: 12, display: 'flex', gap: 8, justifyContent: 'space-between' }}>
+                    <span>{p.name}:</span> <strong>{p.value}</strong>
                 </div>
             ))}
         </div>
@@ -42,11 +51,13 @@ export function Dashboard() {
     const { data: trend, loading: l2 } = useApi(api.getCallsTrend);
     const { data: recent, loading: l3 } = useApi(api.getRecentSessions);
     const { data: interpStatus, loading: l4 } = useApi(api.getInterpreterStatus);
+    const navigate = useNavigate();
 
     const trendData = (trend || []).map(r => ({
         date: new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         Total: Number(r.total),
         Completed: Number(r.completed),
+        Missed: Number(r.missed),
         Cancelled: Number(r.cancelled),
     }));
 
@@ -58,70 +69,73 @@ export function Dashboard() {
             <div className="section">
                 <div className="page-header">
                     <div>
-                        <div className="page-title">Dashboard Overview</div>
-                        <div className="page-description">Real-time call center statistics</div>
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block', boxShadow: '0 0 6px #10b981' }} />
-                        Live data
+                        <div className="page-title">Analytics Hub</div>
+                        <div className="page-description">Real-time performance metrics and live statistics</div>
                     </div>
                 </div>
 
                 {l1 ? <div className="loading-container"><div className="spinner" /></div> : (
-                    <div className="grid-4">
+                    <div className="grid-3">
                         <StatCard
                             color="blue"
                             label="Total Interpreters"
                             value={stats?.total_interpreters}
                             icon={<IconUsers />}
+                            onClick={() => navigate('/interpreters')}
                         />
                         <StatCard
                             color="green"
                             label="Online Now"
                             value={stats?.active_interpreters}
                             icon={<IconWifi />}
-                            sub="Available interpreters"
+                            onClick={() => navigate('/interpreters')}
                         />
                         <StatCard
                             color="orange"
                             label="On Call Now"
                             value={stats?.on_call}
                             icon={<IconPhone />}
-                            sub="Active sessions"
+                            onClick={() => navigate('/interpreters')}
                         />
                         <StatCard
                             color="purple"
                             label="Total Customers"
                             value={stats?.total_customers}
                             icon={<IconUser />}
+                            onClick={() => navigate('/customers')}
                         />
                         <StatCard
-                            color="cyan"
+                            color="blue"
                             label="Calls Today"
                             value={stats?.calls_today}
                             icon={<IconActivity />}
-                            sub="All call attempts"
                         />
                         <StatCard
                             color="green"
                             label="Completed Today"
                             value={stats?.completed_today}
                             icon={<IconCheck />}
-                            sub="Successfully answered"
                         />
                         <StatCard
                             color="red"
                             label="Missed Today"
                             value={stats?.missed_today}
                             icon={<IconPhoneMissed />}
-                            sub="Cancelled calls"
+                            onClick={() => navigate('/missed-calls')}
                         />
                         <StatCard
-                            color="yellow"
+                            color="pink"
+                            label="Cancelled Today"
+                            value={stats?.cancelled_today}
+                            icon={<IconXCircle />}
+                            onClick={() => navigate('/missed-calls')}
+                        />
+                        <StatCard
+                            color="orange"
                             label="Pending Today"
                             value={stats?.pending_today}
                             icon={<IconClock />}
-                            sub="Awaiting connection"
+                            onClick={() => navigate('/pending-calls')}
                         />
                     </div>
                 )}
@@ -133,30 +147,31 @@ export function Dashboard() {
                 <div className="card">
                     <div className="card-header">
                         <div>
-                            <div className="card-title">Call Activity (Last 7 Days)</div>
-                            <div className="card-subtitle">Total vs completed vs cancelled</div>
+                            <div className="card-title">Call Volume Patterns</div>
+                            <div className="card-subtitle">Performance over the last 7 days</div>
                         </div>
                     </div>
-                    {l2 ? <div className="loading-container" style={{ height: 200 }}><div className="spinner" /></div> : (
-                        <ResponsiveContainer width="100%" height={220}>
-                            <AreaChart data={trendData} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
+                    {l2 ? <div className="loading-container" style={{ height: 260 }}><div className="spinner" /></div> : (
+                        <ResponsiveContainer width="100%" height={260}>
+                            <AreaChart data={trendData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
                                 <defs>
                                     <linearGradient id="colTotal" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
+                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                                     </linearGradient>
                                     <linearGradient id="colCompleted" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
                                         <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                                <YAxis tick={{ fontSize: 11 }} />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="date" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} dy={10} />
+                                <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                                 <Tooltip content={<CustomTooltip />} />
-                                <Area type="monotone" dataKey="Total" stroke="#3b82f6" fill="url(#colTotal)" strokeWidth={2} />
-                                <Area type="monotone" dataKey="Completed" stroke="#10b981" fill="url(#colCompleted)" strokeWidth={2} />
-                                <Area type="monotone" dataKey="Cancelled" stroke="#ef4444" fill="none" strokeWidth={2} strokeDasharray="4 2" />
+                                <Area type="monotone" dataKey="Total" stroke="#6366f1" fill="url(#colTotal)" strokeWidth={3} />
+                                <Area type="monotone" dataKey="Completed" stroke="#10b981" fill="url(#colCompleted)" strokeWidth={3} />
+                                <Area type="monotone" dataKey="Missed" stroke="#ef4444" fill="none" strokeWidth={2} />
+                                <Area type="monotone" dataKey="Cancelled" stroke="#ec4899" fill="none" strokeWidth={2} strokeDasharray="6 4" />
                             </AreaChart>
                         </ResponsiveContainer>
                     )}
@@ -166,40 +181,43 @@ export function Dashboard() {
                 <div className="card">
                     <div className="card-header">
                         <div>
-                            <div className="card-title">Interpreter Status</div>
-                            <div className="card-subtitle">Current availability</div>
+                            <div className="card-title">Live Availability</div>
+                            <div className="card-subtitle">Real-time status distribution</div>
                         </div>
                     </div>
-                    {l4 ? <div className="loading-container" style={{ height: 200 }}><div className="spinner" /></div> : (
-                        <ResponsiveContainer width="100%" height={220}>
-                            <PieChart>
-                                <Pie
-                                    data={pieData}
-                                    cx="50%"
-                                    cy="45%"
-                                    innerRadius={55}
-                                    outerRadius={85}
-                                    paddingAngle={4}
-                                    dataKey="value"
-                                >
-                                    {pieData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS_PIE[index % COLORS_PIE.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip
-                                    formatter={(v, n) => [v, n]}
-                                    contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8 }}
-                                />
-                                <Legend
-                                    iconType="circle"
-                                    iconSize={8}
-                                    formatter={(v) => <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{v}</span>}
-                                />
-                            </PieChart>
-                        </ResponsiveContainer>
+                    {l4 ? <div className="loading-container" style={{ height: 260 }}><div className="spinner" /></div> : (
+                        <div style={{ height: 260 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={pieData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={65}
+                                        outerRadius={95}
+                                        paddingAngle={8}
+                                        dataKey="value"
+                                        stroke="none"
+                                    >
+                                        {pieData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS_PIE[index % COLORS_PIE.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip content={<CustomTooltip />} />
+                                    <Legend
+                                        verticalAlign="bottom"
+                                        align="center"
+                                        iconType="circle"
+                                        iconSize={10}
+                                        formatter={(v) => <span style={{ color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600 }}>{v}</span>}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
                     )}
                 </div>
             </div>
+
 
             {/* ── Recent Sessions ──────────────────────────── */}
             <div className="card section">
@@ -243,7 +261,7 @@ export function Dashboard() {
                                         </td>
                                         <td>{s.interpreter_name || <span className="badge badge-gray">Unassigned</span>}</td>
                                         <td><ChatBadge is_chat={s.is_chat} /></td>
-                                        <td><StatusBadge status={s.status} /></td>
+                                        <td><StatusBadge status={s.status} notificationCount={s.notification_count} /></td>
                                         <td style={{ fontFamily: 'monospace', fontSize: 12 }}>{s.duration ? `${s.duration}s` : '—'}</td>
                                         <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>{formatDateTime(s.created_at)}</td>
                                     </tr>
@@ -281,4 +299,7 @@ function IconCheck() {
 }
 function IconClock() {
     return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>;
+}
+function IconXCircle() {
+    return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>;
 }

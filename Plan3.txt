@@ -1,0 +1,6 @@
+In Dashboaard make sure missed call and Cancelled calls are two seprate yhing 
+how to calculate Cancelled Calls 
+if montoring_session is creatted in monitoring_sessions table and its status is 3 and same monitoring session detail is not in interpreter_notification_resposnes 
+means interpreter didnt get the request so they didnt missed so these two data are seprate 
+
+also show cancelled data in dashboard

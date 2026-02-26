@@ -81,7 +81,7 @@ it contain all the data of interpreter
 
 3rd Table
 
-montoring_sessions 
+monitoring_sessions 
 
 it contain data that how many calls are connected how many calls are missed 
 did user cancelled call or call completed 
