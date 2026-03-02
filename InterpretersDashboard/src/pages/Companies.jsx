@@ -5,10 +5,9 @@ import { api } from '../api/api';
 import { Avatar } from '../components/Avatar';
 import { Pagination } from '../components/Pagination';
 import { timeAgo } from '../utils/helpers';
-import { DateFilter } from '../components/DateFilter';
 
 export function Companies() {
-    const [dateFilter, setDateFilter] = useState('all');
+
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -19,18 +18,15 @@ export function Companies() {
     }, [search]);
 
     const { data, loading, error } = useApi(
-        () => api.getCompanies(dateFilter, page, debouncedSearch),
-        [dateFilter, page, debouncedSearch]
+        () => api.getCompanies('all', page, debouncedSearch),
+        [page, debouncedSearch]
     );
 
     const navigate = useNavigate();
 
     const companies = data?.data || [];
     const pagination = data?.pagination || {};
-
-    const totalCalls = companies.reduce((s, c) => s + Number(c.total_calls || 0), 0);
-    const totalCompleted = companies.reduce((s, c) => s + Number(c.completed_calls || 0), 0);
-    const totalUsers = companies.reduce((s, c) => s + Number(c.total_users || 0), 0);
+    const stats = data?.stats || {};
 
     return (
         <div className="page-content fade-in">
@@ -38,10 +34,9 @@ export function Companies() {
                 <div>
                     <div className="page-title">Companies</div>
                     <div className="page-description">
-                        Organisational performance and call analytics for the selected period
+                        Organisational performance and call analytics
                     </div>
                 </div>
-                <DateFilter value={dateFilter} onChange={(val) => { setDateFilter(val); setPage(1); }} />
             </div>
 
             {/* Summary cards */}
@@ -58,7 +53,7 @@ export function Companies() {
                     </div>
                     <div className="card" style={{ borderColor: 'rgba(59,130,246,0.3)', background: 'rgba(59,130,246,0.05)' }}>
                         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                            <div style={{ fontSize: 28, fontWeight: 800, color: '#60a5fa' }}>{totalUsers}</div>
+                            <div style={{ fontSize: 28, fontWeight: 800, color: '#60a5fa' }}>{stats.total_users || 0}</div>
                             <div>
                                 <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Company Users</div>
                                 <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Users linked to companies</div>
@@ -67,7 +62,7 @@ export function Companies() {
                     </div>
                     <div className="card" style={{ borderColor: 'rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.05)' }}>
                         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                            <div style={{ fontSize: 28, fontWeight: 800, color: '#34d399' }}>{totalCompleted}</div>
+                            <div style={{ fontSize: 28, fontWeight: 800, color: '#34d399' }}>{stats.total_completed || 0}</div>
                             <div>
                                 <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Completed Calls</div>
                                 <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Across all companies</div>

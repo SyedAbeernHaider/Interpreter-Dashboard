@@ -141,7 +141,7 @@ export function InterpreterDetails() {
                                         className={`filter-tab ${tab === 'calls' ? 'active' : ''}`}
                                         onClick={() => setTab('calls')}
                                     >
-                                        Call History ({totalCalls})
+                                        Completed Calls ({totalCalls})
                                     </button>
                                     <button
                                         className={`filter-tab ${tab === 'missed' ? 'active' : ''}`}

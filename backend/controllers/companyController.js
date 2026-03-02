@@ -49,8 +49,28 @@ const getAllCompanies = async (req, res) => {
             LIMIT ? OFFSET ?
         `, [EXCLUDED_EMAILS, ...(search ? [searchLower] : []), l, offset]);
 
+        // Aggregate stats across ALL companies (not just current page)
+        const [[{ total_users_all, total_completed_all }]] = await pool.query(`
+            SELECT 
+                COUNT(DISTINCT cu.customer_id) AS total_users_all,
+                COALESCE(SUM(ms_stats.completed_calls), 0) AS total_completed_all
+            FROM companies co
+            LEFT JOIN customers cu ON cu.company_id = co.company_id
+            LEFT JOIN (
+                SELECT customer_id, SUM(status = 2) AS completed_calls
+                FROM monitoring_sessions
+                WHERE 1=1 ${dateClause}
+                GROUP BY customer_id
+            ) ms_stats ON cu.customer_id = ms_stats.customer_id
+            WHERE (cu.email NOT IN (?) OR cu.email IS NULL)
+        `, [EXCLUDED_EMAILS]);
+
         const responseData = {
             data: rows,
+            stats: {
+                total_users: total_users_all,
+                total_completed: total_completed_all
+            },
             pagination: {
                 total,
                 page: p,

@@ -19,7 +19,7 @@ const getMissedCalls = async (req, res) => {
         const searchParams = search ? [searchLower, searchLower, searchLower] : [];
 
         const [[{ total }]] = await pool.query(`
-            SELECT COUNT(*) as total 
+            SELECT COUNT(DISTINCT inr.monitoring_id, inr.customer_id) as total 
             FROM interpreter_notification_responses inr
             LEFT JOIN interpreter i ON i.interpreter_id = inr.interpreter_id
             JOIN customers c ON c.customer_id = inr.customer_id
@@ -38,8 +38,23 @@ const getMissedCalls = async (req, res) => {
             LIMIT ? OFFSET ?
         `, [EXCLUDED_EMAILS, ...searchParams, l, offset]);
 
+        // Aggregate stats across ALL missed calls (not just current page)
+        const [[{ unique_interpreters, unique_customers }]] = await pool.query(`
+            SELECT 
+                COUNT(DISTINCT inr.interpreter_id) AS unique_interpreters,
+                COUNT(DISTINCT inr.customer_id) AS unique_customers
+            FROM interpreter_notification_responses inr
+            LEFT JOIN interpreter i ON i.interpreter_id = inr.interpreter_id
+            JOIN customers c ON c.customer_id = inr.customer_id
+            WHERE c.email NOT IN (?) ${dateClause}
+        `, [EXCLUDED_EMAILS]);
+
         const responseData = {
             data: rows,
+            stats: {
+                unique_interpreters,
+                unique_customers
+            },
             pagination: {
                 total,
                 page: p,

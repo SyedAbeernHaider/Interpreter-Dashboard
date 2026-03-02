@@ -134,14 +134,6 @@ export function Dashboard() {
                             label="Cancelled Calls"
                             value={stats?.cancelled_today}
                             icon={<IconXCircle />}
-                            onClick={() => navigate('/missed-calls')}
-                        />
-                        <StatCard
-                            color="orange"
-                            label="Disconnected Calls"
-                            value={stats?.disconnected_today}
-                            icon={<IconClock />}
-                            onClick={() => navigate('/disconnected-calls')}
                         />
                     </div>
                 )}

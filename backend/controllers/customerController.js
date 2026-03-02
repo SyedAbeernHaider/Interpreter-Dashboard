@@ -54,8 +54,50 @@ const getAllCustomers = async (req, res) => {
             LIMIT ? OFFSET ?
         `, [EXCLUDED_EMAILS, ...searchParams, l, offset]);
 
+        // Aggregate stats across ALL customers (not just current page)
+        const [[{ frequent_count }]] = await pool.query(`
+            SELECT COUNT(*) AS frequent_count FROM (
+                SELECT c.customer_id
+                FROM customers c
+                LEFT JOIN (
+                    SELECT customer_id, COUNT(*) AS total_calls
+                    FROM monitoring_sessions
+                    WHERE 1=1 ${msDateClause}
+                    GROUP BY customer_id
+                ) ms ON c.customer_id = ms.customer_id
+                WHERE c.email NOT IN (?) AND COALESCE(ms.total_calls, 0) >= 2
+            ) sub
+        `, [EXCLUDED_EMAILS]);
+
+        const [[{ neglected_count }]] = await pool.query(`
+            SELECT COUNT(*) AS neglected_count FROM (
+                SELECT c.customer_id
+                FROM customers c
+                LEFT JOIN (
+                    SELECT customer_id, COUNT(*) AS total_calls
+                    FROM monitoring_sessions
+                    WHERE 1=1 ${msDateClause}
+                    GROUP BY customer_id
+                ) ms ON c.customer_id = ms.customer_id
+                LEFT JOIN (
+                    SELECT customer_id, COUNT(*) AS missed
+                    FROM interpreter_notification_responses
+                    WHERE 1=1 ${inrDateClause}
+                    GROUP BY customer_id
+                ) inr ON c.customer_id = inr.customer_id
+                WHERE c.email NOT IN (?)
+                AND COALESCE(ms.total_calls, 0) > 0
+                AND COALESCE(inr.missed, 0) > 0
+                AND COALESCE(inr.missed, 0) / GREATEST(COALESCE(ms.total_calls, 0), 1) > 0.4
+            ) sub
+        `, [EXCLUDED_EMAILS]);
+
         const responseData = {
             data: rows,
+            stats: {
+                frequent_count,
+                neglected_count
+            },
             pagination: {
                 total,
                 page: p,

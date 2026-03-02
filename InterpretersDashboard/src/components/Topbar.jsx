@@ -1,9 +1,10 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export function Topbar() {
     const location = useLocation();
+    const { logout, user } = useAuth();
 
-    // Simple breadcrumb logic based on path
     const pathParts = location.pathname.split('/').filter(p => p);
     const pageName = pathParts.length > 0
         ? pathParts[0].charAt(0).toUpperCase() + pathParts[0].slice(1)
@@ -37,27 +38,16 @@ export function Topbar() {
             <div style={{ flex: 1 }} />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                {/* Search Trigger */}
-                <button className="btn-ghost" style={{ padding: 8, borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-                    </svg>
-                </button>
+                <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
 
-                {/* Notifications */}
-                <button className="btn-ghost" style={{ padding: 8, borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-                    </svg>
-                    <span style={{ position: 'absolute', top: 8, right: 8, width: 8, height: 8, background: 'var(--accent-red)', borderRadius: '50%', border: '2px solid white' }} />
-                </button>
-
-                <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 8px' }} />
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                    <div style={{ textAlign: 'right', display: 'none', md: 'block' }}>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>Admin User</div>
-                        <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Super Admin</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>
+                            {user?.name || 'Admin'}
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                            {user?.email || 'Super Admin'}
+                        </div>
                     </div>
                     <div style={{
                         width: 36,
@@ -75,6 +65,15 @@ export function Topbar() {
                         AD
                     </div>
                 </div>
+
+                <button className="logout-btn" onClick={logout}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" x2="9" y1="12" y2="12" />
+                    </svg>
+                    Logout
+                </button>
             </div>
         </div>
     );

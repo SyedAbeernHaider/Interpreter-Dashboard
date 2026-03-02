@@ -27,13 +27,9 @@ export function MissedCalls() {
 
     const missedCalls = data?.data || [];
     const pagination = data?.pagination || {};
+    const stats = data?.stats || {};
 
-    // Stats (Since we only have paginated data here, we use the total from pagination for basic count)
     const totalCount = pagination.total || 0;
-    // For unique counts, if we wanted real ones we'd need another backend stat or fetch all.
-    // For now I'll just show the total from pagination.
-    const uniqueInterpreters = new Set(missedCalls.map(m => m.interpreter_id)).size;
-    const uniqueCustomers = new Set(missedCalls.map(m => m.customer_id)).size;
 
     return (
         <div className="page-content fade-in">
@@ -52,8 +48,8 @@ export function MissedCalls() {
                 <div className="grid-3 section">
                     {[
                         { label: 'Total Missed', value: totalCount, color: '#ef4444', bg: 'rgba(239,68,68,0.07)', border: 'rgba(239,68,68,0.2)' },
-                        { label: 'Interpreters Involved', value: uniqueInterpreters, color: '#3b82f6', bg: 'rgba(59,130,246,0.07)', border: 'rgba(59,130,246,0.2)' },
-                        { label: 'Customers Affected', value: uniqueCustomers, color: '#f59e0b', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.2)' },
+                        { label: 'Interpreters Involved', value: stats.unique_interpreters || 0, color: '#3b82f6', bg: 'rgba(59,130,246,0.07)', border: 'rgba(59,130,246,0.2)' },
+                        { label: 'Customers Affected', value: stats.unique_customers || 0, color: '#f59e0b', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.2)' },
                     ].map(s => (
                         <div key={s.label} className="card" style={{ borderColor: s.border, background: s.bg }}>
                             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>

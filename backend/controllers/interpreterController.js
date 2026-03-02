@@ -1,7 +1,7 @@
 const ExcelJS = require('exceljs');
 const pool = require('../config/db');
 const { EXCLUDED_EMAILS } = require('../utils/excludeList');
-const { getDateFilter, getPagination } = require('../utils/queryHelpers');
+const { getDateFilter, getPagination, getPKTDate } = require('../utils/queryHelpers');
 const cache = require('../utils/cache');
 
 // GET /api/interpreters
@@ -113,7 +113,7 @@ const getInterpreterById = async (req, res) => {
             FROM monitoring_sessions ms
             JOIN customers c ON ms.customer_id = c.customer_id
             WHERE ms.interpreter_id = ? AND c.email NOT IN(?) 
-            AND ms.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            AND ms.created_at >= '${getPKTDate(-30)} 00:00:00'
             GROUP BY DATE(ms.created_at)
             ORDER BY date ASC
         `, [id, EXCLUDED_EMAILS]);

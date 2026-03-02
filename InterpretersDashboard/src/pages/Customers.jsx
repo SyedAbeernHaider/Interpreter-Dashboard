@@ -5,10 +5,9 @@ import { api } from '../api/api';
 import { Avatar } from '../components/Avatar';
 import { Pagination } from '../components/Pagination';
 import { timeAgo, formatDate } from '../utils/helpers';
-import { DateFilter } from '../components/DateFilter';
 
 export function Customers() {
-    const [dateFilter, setDateFilter] = useState('all');
+
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -19,8 +18,8 @@ export function Customers() {
     }, [search]);
 
     const { data, loading, error } = useApi(
-        () => api.getCustomers(dateFilter, page, debouncedSearch),
-        [dateFilter, page, debouncedSearch]
+        () => api.getCustomers('all', page, debouncedSearch),
+        [page, debouncedSearch]
     );
 
     const [tab, setTab] = useState('active');
@@ -28,6 +27,7 @@ export function Customers() {
 
     const customers = data?.data || [];
     const pagination = data?.pagination || {};
+    const stats = data?.stats || {};
 
     const activeUsers = customers
         .filter(c => Number(c.total_calls) >= 2)
@@ -49,10 +49,9 @@ export function Customers() {
                 <div>
                     <div className="page-title">Customers</div>
                     <div className="page-description">
-                        Behavior and engagement analysis for the selected period
+                        Behavior and engagement analysis
                     </div>
                 </div>
-                <DateFilter value={dateFilter} onChange={(val) => { setDateFilter(val); setPage(1); }} />
             </div>
 
             {/* Alert cards */}
@@ -69,7 +68,7 @@ export function Customers() {
                     </div>
                     <div className="card" style={{ borderColor: 'rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.05)' }}>
                         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                            <div style={{ fontSize: 28, fontWeight: 800, color: '#34d399' }}>{activeUsers.length}</div>
+                            <div style={{ fontSize: 28, fontWeight: 800, color: '#34d399' }}>{stats.frequent_count || 0}</div>
                             <div>
                                 <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Frequent Callers</div>
                                 <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Users with 2+ calls</div>
@@ -78,7 +77,7 @@ export function Customers() {
                     </div>
                     <div className="card" style={{ borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)' }}>
                         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                            <div style={{ fontSize: 28, fontWeight: 800, color: '#f87171' }}>{neglectedUsers.length}</div>
+                            <div style={{ fontSize: 28, fontWeight: 800, color: '#f87171' }}>{stats.neglected_count || 0}</div>
                             <div>
                                 <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Neglected Users</div>
                                 <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>High interpreter miss rate (&gt;40%)</div>

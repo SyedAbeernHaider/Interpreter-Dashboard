@@ -48,13 +48,10 @@ export function PendingCalls() {
                     <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', marginTop: 4 }}>{pagination.total || 0}</div>
                 </div>
                 <div className="card" style={{ borderLeft: '4px solid var(--accent-blue)' }}>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Waiting Customers</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Disconnected Customers</div>
                     <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', marginTop: 4 }}>{frequentUsers.length}</div>
                 </div>
-                <div className="card" style={{ borderLeft: '4px solid var(--accent-purple)' }}>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Avg Wait Time</div>
-                    <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', marginTop: 4 }}>Live</div>
-                </div>
+
             </div>
 
             <div className="grid-2-1 section">
@@ -87,7 +84,7 @@ export function PendingCalls() {
                                     <tr>
                                         <th>Customer</th>
                                         <th>Request Time</th>
-                                        <th>Waiting For</th>
+                                        <th>Disconnected Time</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>

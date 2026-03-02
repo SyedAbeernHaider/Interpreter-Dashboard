@@ -4,12 +4,11 @@ import { useApi } from '../hooks/useApi';
 import { api } from '../api/api';
 import { Avatar } from '../components/Avatar';
 import { OnlineStatus } from '../components/StatusBadge';
-import { DateFilter } from '../components/DateFilter';
 import { Pagination } from '../components/Pagination';
 import { formatDateTime, timeAgo } from '../utils/helpers';
 
 export function Interpreters() {
-    const [dateFilter, setDateFilter] = useState('all');
+
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -20,8 +19,8 @@ export function Interpreters() {
     }, [search]);
 
     const { data, loading, error } = useApi(
-        () => api.getInterpreters(dateFilter, page, debouncedSearch),
-        [dateFilter, page, debouncedSearch]
+        () => api.getInterpreters('all', page, debouncedSearch),
+        [page, debouncedSearch]
     );
 
     const [filterStatus, setFilterStatus] = useState('all');
@@ -58,17 +57,16 @@ export function Interpreters() {
                 <div>
                     <div className="page-title">Interpreters</div>
                     <div className="page-description">
-                        Call performance statistics for the selected period
+                        Call performance statistics
                     </div>
                 </div>
-                <DateFilter value={dateFilter} onChange={(val) => { setDateFilter(val); setPage(1); }} />
             </div>
 
             {/* Quick stats */}
             {data && (
                 <div className="grid-4 section">
                     {[
-                        { label: 'Total', value: data.length, color: '#3b82f6' },
+                        { label: 'Total', value: pagination.total || 0, color: '#3b82f6' },
                         { label: 'Online', value: online, color: '#10b981' },
                         { label: 'On Call', value: onCall, color: '#f59e0b' },
                         { label: 'Offline', value: offline, color: '#4b5a72' },
