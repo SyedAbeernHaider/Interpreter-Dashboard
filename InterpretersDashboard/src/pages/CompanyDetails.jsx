@@ -138,7 +138,7 @@ export function CompanyDetails() {
                                 <button
                                     className="btn btn-ghost btn-sm"
                                     onClick={() => {
-                                        window.location.href = `http://localhost:3001/api/companies/${id}/export?filter=${dateFilter}`;
+                                        window.location.href = `/api/companies/${id}/export?filter=${dateFilter}`;
                                     }}
                                     style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent-green)' }}
                                 >

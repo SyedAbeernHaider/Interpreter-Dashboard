@@ -156,7 +156,7 @@ export function InterpreterDetails() {
                                 <button
                                     className="btn btn-ghost btn-sm"
                                     onClick={() => {
-                                        window.location.href = `http://localhost:3001/api/interpreters/${id}/export?filter=${filter}`;
+                                        window.location.href = `/api/interpreters/${id}/export?filter=${filter}`;
                                     }}
                                     style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent-green)' }}
                                 >

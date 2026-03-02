@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
 export function AuthProvider({ children }) {
     const [token, setToken] = useState(() => sessionStorage.getItem('auth_token'));
     const [user, setUser] = useState(() => {
@@ -16,7 +18,7 @@ export function AuthProvider({ children }) {
             setLoading(false);
             return;
         }
-        fetch('http://localhost:3001/api/auth/verify', {
+        fetch(`${API_BASE}/auth/verify`, {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(r => {
@@ -34,7 +36,7 @@ export function AuthProvider({ children }) {
     }, []);
 
     const login = async (email, password) => {
-        const res = await fetch('http://localhost:3001/api/auth/login', {
+        const res = await fetch(`${API_BASE}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
@@ -50,7 +52,7 @@ export function AuthProvider({ children }) {
 
     const logout = () => {
         if (token) {
-            fetch('http://localhost:3001/api/auth/logout', {
+            fetch(`${API_BASE}/auth/logout`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` }
             }).catch(() => { });
