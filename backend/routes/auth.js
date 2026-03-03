@@ -1,17 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken');
+
+// Secret for signing JWT tokens
+const JWT_SECRET = process.env.JWT_SECRET || 'ch_secret_2024_auth_key';
 
 // Hardcoded credentials
-const ADMIN_EMAIL = 'admin@connecthear.org';
+const ADMIN_EMAILS = ['admin@connecthear.org'];
 const ADMIN_PASSWORD = 'admin@123';
-
-// Simple token generator
-function generateToken() {
-    return 'ch_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-}
-
-// In-memory valid tokens set
-const validTokens = new Set();
 
 // POST /api/auth/login
 router.post('/login', (req, res) => {
@@ -21,30 +17,45 @@ router.post('/login', (req, res) => {
         return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+    const inputEmail = email.toLowerCase().trim();
+    const isValidEmail = ADMIN_EMAILS.includes(inputEmail);
+
+    if (!isValidEmail || password !== ADMIN_PASSWORD) {
         return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const token = generateToken();
-    validTokens.add(token);
+    const userEmail = inputEmail; // Use the one they provided
 
-    res.json({ token, user: { email: ADMIN_EMAIL, name: 'Admin' } });
+    // Generate stateless JWT token
+    const token = jwt.sign(
+        { email: userEmail, name: 'Admin' },
+        JWT_SECRET,
+        { expiresIn: '30d' }
+    );
+
+    res.json({ token, user: { email: userEmail, name: 'Admin' } });
 });
 
 // POST /api/auth/logout
 router.post('/logout', (req, res) => {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    if (token) validTokens.delete(token);
+    // Stateless auth - frontend just needs to delete the token
     res.json({ message: 'Logged out' });
 });
 
 // GET /api/auth/verify
 router.get('/verify', (req, res) => {
     const token = req.headers.authorization?.replace('Bearer ', '');
-    if (!token || !validTokens.has(token)) {
-        return res.status(401).json({ error: 'Invalid token' });
+
+    if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
     }
-    res.json({ valid: true, user: { email: ADMIN_EMAIL, name: 'Admin' } });
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        res.json({ valid: true, user: { email: decoded.email, name: decoded.name } });
+    } catch (err) {
+        return res.status(401).json({ error: 'Invalid or expired token' });
+    }
 });
 
-module.exports = { authRoutes: router, validTokens };
+module.exports = { authRoutes: router };

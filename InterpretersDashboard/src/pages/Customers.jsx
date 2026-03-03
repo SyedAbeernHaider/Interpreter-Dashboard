@@ -6,11 +6,14 @@ import { Avatar } from '../components/Avatar';
 import { Pagination } from '../components/Pagination';
 import { timeAgo, formatDate } from '../utils/helpers';
 
-export function Customers() {
+import { DateFilter } from '../components/DateFilter';
 
+export function Customers() {
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [tab, setTab] = useState('all');
+    const [dateFilter, setDateFilter] = useState('all');
 
     useEffect(() => {
         const timer = setTimeout(() => setDebouncedSearch(search), 500);
@@ -18,30 +21,15 @@ export function Customers() {
     }, [search]);
 
     const { data, loading, error } = useApi(
-        () => api.getCustomers('all', page, debouncedSearch),
-        [page, debouncedSearch]
+        () => api.getCustomers(dateFilter, page, debouncedSearch, tab),
+        [dateFilter, page, debouncedSearch, tab]
     );
 
-    const [tab, setTab] = useState('active');
     const navigate = useNavigate();
 
     const customers = data?.data || [];
     const pagination = data?.pagination || {};
     const stats = data?.stats || {};
-
-    const activeUsers = customers
-        .filter(c => Number(c.total_calls) >= 2)
-        .sort((a, b) => Number(b.total_calls) - Number(a.total_calls));
-
-    const neglectedUsers = customers
-        .filter(c => {
-            const total = Number(c.total_calls) || 0;
-            const missed = Number(c.missed_by_interpreters) || 0;
-            return total > 0 && missed > 0 && missed / Math.max(total, 1) > 0.4;
-        })
-        .sort((a, b) => Number(b.missed_by_interpreters) - Number(a.missed_by_interpreters));
-
-    const displayed = tab === 'active' ? activeUsers : tab === 'neglected' ? neglectedUsers : customers;
 
     return (
         <div className="page-content fade-in">
@@ -49,20 +37,21 @@ export function Customers() {
                 <div>
                     <div className="page-title">Customers</div>
                     <div className="page-description">
-                        Behavior and engagement analysis
+                        User activity and experience monitoring
                     </div>
                 </div>
+                <DateFilter value={dateFilter} onChange={(f) => { setDateFilter(f); setPage(1); }} />
             </div>
 
             {/* Alert cards */}
             {data && (
-                <div className="grid-3 section">
+                <div className="grid-4 section">
                     <div className="card" style={{ borderColor: 'rgba(59,130,246,0.3)', background: 'rgba(59,130,246,0.05)' }}>
                         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                             <div style={{ fontSize: 28, fontWeight: 800, color: '#60a5fa' }}>{pagination.total || 0}</div>
                             <div>
                                 <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Total Customers</div>
-                                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>All registered users</div>
+                                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Found for current filter</div>
                             </div>
                         </div>
                     </div>
@@ -71,7 +60,7 @@ export function Customers() {
                             <div style={{ fontSize: 28, fontWeight: 800, color: '#34d399' }}>{stats.frequent_count || 0}</div>
                             <div>
                                 <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Frequent Callers</div>
-                                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Users with 2+ calls</div>
+                                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Min. 2 calls in every active month</div>
                             </div>
                         </div>
                     </div>
@@ -81,6 +70,15 @@ export function Customers() {
                             <div>
                                 <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Neglected Users</div>
                                 <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>High interpreter miss rate (&gt;40%)</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="card" style={{ borderColor: 'rgba(139,92,246,0.3)', background: 'rgba(139,92,246,0.05)' }}>
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                            <div style={{ fontSize: 28, fontWeight: 800, color: '#8b5cf6' }}>{stats.both_count || 0}</div>
+                            <div>
+                                <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Frequent + Neglected</div>
+                                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Meeting both criteria</div>
                             </div>
                         </div>
                     </div>
@@ -103,34 +101,19 @@ export function Customers() {
 
                     <div className="filter-tabs">
                         <button className={`filter-tab ${tab === 'all' ? 'active' : ''}`} onClick={() => { setTab('all'); setPage(1); }}>
-                            All ({customers.length})
+                            All
                         </button>
-                        <button className={`filter-tab ${tab === 'active' ? 'active' : ''}`} onClick={() => { setTab('active'); setPage(1); }}>
-                            🔥 Frequent ({activeUsers.length})
+                        <button className={`filter-tab ${tab === 'frequent' ? 'active' : ''}`} onClick={() => { setTab('frequent'); setPage(1); }}>
+                            🔥 Frequent
                         </button>
                         <button className={`filter-tab ${tab === 'neglected' ? 'active' : ''}`} onClick={() => { setTab('neglected'); setPage(1); }}>
-                            ⚠️ Neglected ({neglectedUsers.length})
+                            ⚠️ Neglected
+                        </button>
+                        <button className={`filter-tab ${tab === 'both' ? 'active' : ''}`} onClick={() => { setTab('both'); setPage(1); }}>
+                            🔥 + ⚠️ Both
                         </button>
                     </div>
                 </div>
-
-                {/* Neglected banner */}
-                {tab === 'neglected' && neglectedUsers.length > 0 && (
-                    <div style={{
-                        background: 'rgba(239,68,68,0.08)',
-                        border: '1px solid rgba(239,68,68,0.2)',
-                        borderRadius: 8,
-                        padding: '10px 14px',
-                        marginBottom: 16,
-                        fontSize: 13,
-                        color: '#f87171',
-                        display: 'flex',
-                        gap: 8,
-                        alignItems: 'center'
-                    }}>
-                        ⚠️ These customers frequently call but interpreters often miss their calls. Consider reviewing interpreter availability.
-                    </div>
-                )}
 
                 {loading ? (
                     <div className="loading-container"><div className="spinner" /><span>Loading customers…</span></div>
@@ -139,7 +122,7 @@ export function Customers() {
                         <p style={{ color: 'var(--accent-red)' }}>Error: {error}</p>
                         <span>Make sure the backend is running on port 3001</span>
                     </div>
-                ) : !displayed.length ? (
+                ) : !customers.length ? (
                     <div className="empty-state">
                         <p>No customers found</p>
                     </div>
@@ -149,7 +132,7 @@ export function Customers() {
                             <thead>
                                 <tr>
                                     <th>Customer</th>
-                                    <th>Type</th>
+                                    <th>Attributes</th>
                                     <th>Total Calls</th>
                                     <th>Completed</th>
                                     <th>Cancelled</th>
@@ -160,10 +143,13 @@ export function Customers() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {displayed.map(c => {
+                                {customers.map(c => {
                                     const total = Number(c.total_calls) || 0;
                                     const missed = Number(c.missed_by_interpreters) || 0;
                                     const missRate = total > 0 ? Math.round((missed / total) * 100) : 0;
+                                    const isFrequent = !!c.is_frequent;
+                                    const isNeglected = total > 0 && missed > 0 && (missed / total) > 0.4;
+
                                     return (
                                         <tr
                                             key={c.id}
@@ -180,9 +166,13 @@ export function Customers() {
                                                 </div>
                                             </td>
                                             <td>
-                                                <span className={`badge ${c.type === 'company' ? 'badge-purple' : 'badge-blue'}`}>
-                                                    {c.type || 'customer'}
-                                                </span>
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                                    <span className={`badge ${c.type === 'company' ? 'badge-purple' : 'badge-blue'}`}>
+                                                        {c.type || 'customer'}
+                                                    </span>
+                                                    {isFrequent && <span className="badge badge-green" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)' }}>🔥 Frequent</span>}
+                                                    {isNeglected && <span className="badge badge-red" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' }}>⚠️ Neglected</span>}
+                                                </div>
                                             </td>
                                             <td><span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{total}</span></td>
                                             <td><span style={{ color: '#34d399', fontWeight: 600 }}>{c.completed_calls || 0}</span></td>

@@ -8,7 +8,7 @@ import { formatDateTime, timeAgo } from '../utils/helpers';
 import { DateFilter } from '../components/DateFilter';
 
 export function MissedCalls() {
-    const [dateFilter, setDateFilter] = useState('all');
+    const [dateFilter, setDateFilter] = useState('today');
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -107,7 +107,7 @@ export function MissedCalls() {
                                     const interpName = m.interpreter_name_detail || m.interpreter_name || '—';
                                     const custName = m.customer_name_detail || m.user_name || '—';
                                     return (
-                                        <tr key={m.missed_call_id}>
+                                        <tr key={m.response_id}>
                                             <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>
                                                 {idx + 1}
                                             </td>

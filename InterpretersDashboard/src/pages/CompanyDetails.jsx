@@ -102,7 +102,9 @@ export function CompanyDetails() {
                     {/* ── Call Trend Chart ────────────────────────── */}
                     <div className="card section">
                         <div className="card-header">
-                            <div className="card-title">Call Activity (Last 30 Days)</div>
+                            <div className="card-title">
+                                {dateFilter === 'all' ? 'Activity Trend (Last 30 Days)' : `Activity for ${dateFilter.replace('custom_', '').replace('_', ' to ')}`}
+                            </div>
                         </div>
                         {chartData.length ? (
                             <ResponsiveContainer width="100%" height={220}>

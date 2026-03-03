@@ -5,11 +5,13 @@ import { api } from '../api/api';
 import { Avatar } from '../components/Avatar';
 import { Pagination } from '../components/Pagination';
 import { timeAgo } from '../utils/helpers';
+import { DateFilter } from '../components/DateFilter';
 
 export function Companies() {
 
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
+    const [filter, setFilter] = useState('all');
     const [debouncedSearch, setDebouncedSearch] = useState('');
 
     useEffect(() => {
@@ -18,8 +20,8 @@ export function Companies() {
     }, [search]);
 
     const { data, loading, error } = useApi(
-        () => api.getCompanies('all', page, debouncedSearch),
-        [page, debouncedSearch]
+        () => api.getCompanies(filter, page, debouncedSearch),
+        [filter, page, debouncedSearch]
     );
 
     const navigate = useNavigate();
@@ -36,6 +38,9 @@ export function Companies() {
                     <div className="page-description">
                         Organisational performance and call analytics
                     </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                    <DateFilter value={filter} onChange={(f) => { setFilter(f); setPage(1); }} />
                 </div>
             </div>
 

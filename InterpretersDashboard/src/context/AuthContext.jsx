@@ -5,9 +5,9 @@ const AuthContext = createContext(null);
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 export function AuthProvider({ children }) {
-    const [token, setToken] = useState(() => sessionStorage.getItem('auth_token'));
+    const [token, setToken] = useState(() => localStorage.getItem('auth_token'));
     const [user, setUser] = useState(() => {
-        const u = sessionStorage.getItem('auth_user');
+        const u = localStorage.getItem('auth_user');
         return u ? JSON.parse(u) : null;
     });
     const [loading, setLoading] = useState(true);
@@ -43,8 +43,8 @@ export function AuthProvider({ children }) {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Login failed');
-        sessionStorage.setItem('auth_token', data.token);
-        sessionStorage.setItem('auth_user', JSON.stringify(data.user));
+        localStorage.setItem('auth_token', data.token);
+        localStorage.setItem('auth_user', JSON.stringify(data.user));
         setToken(data.token);
         setUser(data.user);
         return data;
@@ -57,8 +57,8 @@ export function AuthProvider({ children }) {
                 headers: { Authorization: `Bearer ${token}` }
             }).catch(() => { });
         }
-        sessionStorage.removeItem('auth_token');
-        sessionStorage.removeItem('auth_user');
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
         setToken(null);
         setUser(null);
     };

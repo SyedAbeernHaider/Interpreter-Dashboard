@@ -31,6 +31,25 @@ function getDateFilter(filter, column = 'created_at') {
     } else if (filter === '1month') {
         const monthAgo = getPKTDate(-30);
         return `AND ${column} >= '${monthAgo} 00:00:00'`;
+    } else if (filter && filter.startsWith('custom_')) {
+        const parts = filter.split('_');
+        if (parts.length === 3) {
+            let start = parts[1];
+            let end = parts[2];
+            // Format for MySQL: replace 'T' with space if it's a datetime-local string
+            start = start.replace('T', ' ');
+            end = end.replace('T', ' ');
+
+            // If only date was provided (10 chars), add time boundaries
+            if (start.length === 10) start += ' 00:00:00';
+            if (end.length === 10) end += ' 23:59:59';
+
+            // If time was provided but no seconds (16 chars like YYYY-MM-DD HH:mm), add seconds
+            if (start.length === 16) start += ':00';
+            if (end.length === 16) end += ':59';
+
+            return `AND ${column} >= '${start}' AND ${column} <= '${end}'`;
+        }
     }
     return '';
 }

@@ -103,7 +103,9 @@ export function InterpreterDetails() {
                     <div className="grid-2 section">
                         <div className="card">
                             <div className="card-header">
-                                <div className="card-title">Call Activity (30 Days)</div>
+                                <div className="card-title">
+                                    {filter === 'all' ? 'Call Activity (30 Days)' : `Activity for ${filter.replace('custom_', '').replace('_', ' to ')}`}
+                                </div>
                             </div>
                             <ResponsiveContainer width="100%" height={200}>
                                 <BarChart data={chartData} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
@@ -156,7 +158,7 @@ export function InterpreterDetails() {
                                 <button
                                     className="btn btn-ghost btn-sm"
                                     onClick={() => {
-                                        window.location.href = `/api/interpreters/${id}/export?filter=${filter}`;
+                                        window.location.href = `/api/interpreters/${id}/export?filter=${filter}&tab=${tab}`;
                                     }}
                                     style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent-green)' }}
                                 >

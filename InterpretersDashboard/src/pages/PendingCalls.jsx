@@ -8,7 +8,7 @@ import { Pagination } from '../components/Pagination';
 import { formatDateTime, timeAgo } from '../utils/helpers';
 
 export function PendingCalls() {
-    const [dateFilter, setDateFilter] = useState('all');
+    const [dateFilter, setDateFilter] = useState('today');
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');

@@ -19,7 +19,7 @@ export const api = {
         get(`/interpreters/${encodeURIComponent(id)}?filter=${f}`),
 
     // Customers
-    getCustomers: (f = 'all', p = 1, s = '') => get(`/customers?filter=${f}&page=${p}&search=${encodeURIComponent(s)}`),
+    getCustomers: (f = 'all', p = 1, s = '', sf = 'all') => get(`/customers?filter=${f}&page=${p}&search=${encodeURIComponent(s)}&subFilter=${sf}`),
     getCustomerById: (id, f = 'all') => get(`/customers/${encodeURIComponent(id)}?filter=${f}`),
 
     // Missed Calls
