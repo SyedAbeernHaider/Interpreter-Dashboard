@@ -1,3 +1,6 @@
+// Set timezone FIRST before any Date objects are created
+process.env.TZ = 'Asia/Karachi';
+
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');

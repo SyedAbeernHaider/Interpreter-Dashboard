@@ -3,6 +3,9 @@
     "installCommand": "cd backend && npm install && cd ../InterpretersDashboard && npm install",
     "buildCommand": "cd InterpretersDashboard && npm run build",
     "outputDirectory": "InterpretersDashboard/dist",
+    "env": {
+        "TZ": "Asia/Karachi"
+    },
     "functions": {
         "api/index.js": {
             "maxDuration": 30,
