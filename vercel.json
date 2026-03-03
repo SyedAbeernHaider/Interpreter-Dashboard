@@ -3,10 +3,6 @@
     "installCommand": "cd backend && npm install && cd ../InterpretersDashboard && npm install",
     "buildCommand": "cd InterpretersDashboard && npm run build",
     "outputDirectory": "InterpretersDashboard/dist",
-    "env": {
-        "TZ": "Asia/Karachi",
-        "JWT_SECRET": "ch_super_secret_key_change_this_in_vercel_env"
-    },
     "functions": {
         "api/index.js": {
             "maxDuration": 30,
