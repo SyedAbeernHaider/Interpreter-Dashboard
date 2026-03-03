@@ -4,7 +4,7 @@ import { useApi } from '../hooks/useApi';
 import { api } from '../api/api';
 import { Avatar } from '../components/Avatar';
 import { StatusBadge, ChatBadge } from '../components/StatusBadge';
-import { formatDateTime, timeAgo } from '../utils/helpers';
+import { formatDateTime, timeAgo, parsePKT } from '../utils/helpers';
 import { DateFilter } from '../components/DateFilter';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -42,7 +42,7 @@ export function CompanyDetails() {
     );
 
     const chartData = dailyStats.map(d => ({
-        date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Karachi' }),
+        date: parsePKT(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Karachi' }),
         Completed: Number(d.completed),
         Cancelled: Number(d.cancelled),
     }));

@@ -3,7 +3,7 @@ import { useApi } from '../hooks/useApi';
 import { api } from '../api/api';
 import { Avatar } from '../components/Avatar';
 import { StatusBadge, ChatBadge } from '../components/StatusBadge';
-import { formatDateTime, timeAgo } from '../utils/helpers';
+import { formatDateTime, timeAgo, parsePKT } from '../utils/helpers';
 import { DateFilter } from '../components/DateFilter';
 import { useState } from 'react';
 import {
@@ -40,7 +40,7 @@ export function CustomerDetails() {
     // Group calls by date for chart
     const dateMap = {};
     calls.forEach(c => {
-        const d = new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Karachi' });
+        const d = parsePKT(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Karachi' });
         dateMap[d] = (dateMap[d] || 0) + 1;
     });
     const chartData = Object.entries(dateMap)

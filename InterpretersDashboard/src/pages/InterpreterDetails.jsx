@@ -4,7 +4,7 @@ import { useApi } from '../hooks/useApi';
 import { api } from '../api/api';
 import { Avatar } from '../components/Avatar';
 import { OnlineStatus, StatusBadge, ChatBadge } from '../components/StatusBadge';
-import { formatDateTime, formatDate, timeAgo, formatDuration } from '../utils/helpers';
+import { formatDateTime, formatDate, timeAgo, formatDuration, parsePKT } from '../utils/helpers';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, LineChart, Line, Legend
@@ -44,7 +44,7 @@ export function InterpreterDetails() {
     const avgDuration = calls.filter(c => c.duration).reduce((acc, c, _, arr) => acc + Number(c.duration) / arr.length, 0);
 
     const chartData = dailyStats.map(d => ({
-        date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Karachi' }),
+        date: parsePKT(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Karachi' }),
         Total: Number(d.total),
         Completed: Number(d.completed),
     }));

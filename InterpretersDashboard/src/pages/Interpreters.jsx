@@ -5,7 +5,7 @@ import { api } from '../api/api';
 import { Avatar } from '../components/Avatar';
 import { OnlineStatus } from '../components/StatusBadge';
 import { Pagination } from '../components/Pagination';
-import { formatDateTime, timeAgo } from '../utils/helpers';
+import { formatDateTime, timeAgo, parsePKT } from '../utils/helpers';
 
 export function Interpreters() {
 
@@ -43,7 +43,7 @@ export function Interpreters() {
             if (sortBy === 'name') return (a.name || '').localeCompare(b.name || '');
             if (sortBy === 'calls') return Number(b.total_calls || 0) - Number(a.total_calls || 0);
             if (sortBy === 'missed') return Number(b.missed_calls || 0) - Number(a.missed_calls || 0);
-            if (sortBy === 'last') return new Date(b.last_call_time || 0) - new Date(a.last_call_time || 0);
+            if (sortBy === 'last') return parsePKT(b.last_call_time || 0) - parsePKT(a.last_call_time || 0);
             return 0;
         });
 
@@ -178,7 +178,7 @@ export function Interpreters() {
                                             {i.last_call_time ? timeAgo(i.last_call_time) : '—'}
                                         </td>
                                         <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                                            {i.created_at ? new Date(i.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'Asia/Karachi' }) : '—'}
+                                            {i.created_at ? parsePKT(i.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'Asia/Karachi' }) : '—'}
                                         </td>
                                         <td>
                                             <button

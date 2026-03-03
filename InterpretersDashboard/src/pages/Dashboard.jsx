@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '../hooks/useApi';
 import { api } from '../api/api';
-import { formatDateTime, timeAgo } from '../utils/helpers';
+import { formatDateTime, timeAgo, parsePKT } from '../utils/helpers';
 import { StatusBadge, ChatBadge } from '../components/StatusBadge';
 import { Avatar } from '../components/Avatar';
 import { DateFilter } from '../components/DateFilter';
@@ -58,7 +58,7 @@ export function Dashboard() {
     const navigate = useNavigate();
 
     const trendData = (trend || []).map(r => ({
-        date: new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Karachi' }),
+        date: parsePKT(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Karachi' }),
         Total: Number(r.total),
         Completed: Number(r.completed),
         Missed: Number(r.missed),
