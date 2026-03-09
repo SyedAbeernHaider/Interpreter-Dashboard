@@ -27,30 +27,26 @@ async function getAllCustomers({ filter = 'all', page = 1, limit = 20, search = 
             (COALESCE(monthly_consistency.min_monthly_calls, 0) >= 2 AND session_stats.last_call >= DATE_SUB(NOW(), INTERVAL 45 DAY)) AS is_frequent
         FROM vw_customer_list cl
         LEFT JOIN (
-            SELECT
-                customer_id,
+            SELECT 
+                ms.customer_id,
                 COUNT(*) AS total_calls,
-                SUM(status = 2) AS completed_calls,
-                SUM(status != 2 AND is_missed = 1) AS missed_by_interpreters,
-                SUM(status != 2 AND is_missed = 0) AS cancelled_calls,
-                MAX(created_at) AS last_call
-            FROM (
-                SELECT 
-                    ms.customer_id, ms.status, ms.created_at,
-                    EXISTS (
-                        SELECT 1 FROM vw_missed_calls inr 
-                        WHERE inr.monitoring_id = ms.monitoring_id
-                    ) AS is_missed
-                FROM vw_completed_sessions ms
-                WHERE 1=1 ${msDateClause}
-            ) sess
-            GROUP BY customer_id
+                SUM(ms.status = 2) AS completed_calls,
+                SUM(ms.status != 2 AND inr.monitoring_id IS NOT NULL) AS missed_by_interpreters,
+                SUM(ms.status != 2 AND inr.monitoring_id IS NULL) AS cancelled_calls,
+                MAX(ms.created_at) AS last_call
+            FROM monitoring_sessions ms
+            LEFT JOIN (
+                SELECT DISTINCT monitoring_id 
+                FROM interpreter_notification_responses
+            ) inr ON ms.monitoring_id = inr.monitoring_id
+            WHERE 1=1 ${msDateClause}
+            GROUP BY ms.customer_id
         ) session_stats ON cl.customer_id = session_stats.customer_id
         LEFT JOIN (
             SELECT customer_id, MIN(monthly_total) as min_monthly_calls
             FROM (
                 SELECT customer_id, DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as monthly_total
-                FROM vw_completed_sessions
+                FROM monitoring_sessions
                 WHERE status = 2 AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
                 GROUP BY customer_id, month
             ) AS mstats
@@ -100,12 +96,12 @@ async function getAllCustomers({ filter = 'all', page = 1, limit = 20, search = 
                 SELECT monthly_stats.customer_id
                 FROM (
                     SELECT customer_id, DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as monthly_total, MAX(created_at) as last_call
-                    FROM vw_completed_sessions
+                    FROM monitoring_sessions
                     WHERE status = 2 AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
                     GROUP BY customer_id, month
                 ) AS monthly_stats
                 INNER JOIN (
-                    SELECT customer_id FROM vw_completed_sessions WHERE 1=1 ${msDateClause} GROUP BY customer_id
+                    SELECT customer_id FROM monitoring_sessions WHERE 1=1 ${msDateClause} GROUP BY customer_id
                 ) AS active_period ON monthly_stats.customer_id = active_period.customer_id
                 WHERE monthly_stats.customer_id NOT IN (
                     SELECT id FROM (SELECT cl.customer_id as id FROM vw_customer_list cl WHERE cl.email IN (?)) as ex
@@ -119,21 +115,17 @@ async function getAllCustomers({ filter = 'all', page = 1, limit = 20, search = 
                 SELECT cl.customer_id
                 FROM vw_customer_list cl
                 LEFT JOIN (
-                    SELECT
-                        customer_id,
+                    SELECT 
+                        ms.customer_id,
                         COUNT(*) AS total_calls,
-                        SUM(status != 2 AND is_missed = 1) AS missed
-                    FROM (
-                        SELECT 
-                            ms.customer_id, ms.status,
-                            EXISTS (
-                                SELECT 1 FROM vw_missed_calls inr 
-                                WHERE inr.monitoring_id = ms.monitoring_id
-                            ) AS is_missed
-                        FROM vw_completed_sessions ms
-                        WHERE 1=1 ${msDateClause}
-                    ) sess
-                    GROUP BY customer_id
+                        SUM(ms.status != 2 AND inr.monitoring_id IS NOT NULL) AS missed
+                    FROM monitoring_sessions ms
+                    LEFT JOIN (
+                        SELECT DISTINCT monitoring_id 
+                        FROM interpreter_notification_responses
+                    ) inr ON ms.monitoring_id = inr.monitoring_id
+                    WHERE 1=1 ${msDateClause}
+                    GROUP BY ms.customer_id
                 ) ms ON cl.customer_id = ms.customer_id
                 WHERE cl.email NOT IN (?)
                   AND COALESCE(ms.total_calls, 0) > 0
@@ -146,27 +138,23 @@ async function getAllCustomers({ filter = 'all', page = 1, limit = 20, search = 
                 SELECT cl.customer_id
                 FROM vw_customer_list cl
                 LEFT JOIN (
-                    SELECT
-                        customer_id,
+                    SELECT 
+                        ms.customer_id,
                         COUNT(*) AS total_calls,
-                        SUM(status != 2 AND is_missed = 1) AS missed
-                    FROM (
-                        SELECT 
-                            ms.customer_id, ms.status,
-                            EXISTS (
-                                SELECT 1 FROM vw_missed_calls inr 
-                                WHERE inr.monitoring_id = ms.monitoring_id
-                            ) AS is_missed
-                        FROM vw_completed_sessions ms
-                        WHERE 1=1 ${msDateClause}
-                    ) sess
-                    GROUP BY customer_id
+                        SUM(ms.status != 2 AND inr.monitoring_id IS NOT NULL) AS missed
+                    FROM monitoring_sessions ms
+                    LEFT JOIN (
+                        SELECT DISTINCT monitoring_id 
+                        FROM interpreter_notification_responses
+                    ) inr ON ms.monitoring_id = inr.monitoring_id
+                    WHERE 1=1 ${msDateClause}
+                    GROUP BY ms.customer_id
                 ) ms ON cl.customer_id = ms.customer_id
                 LEFT JOIN (
                     SELECT customer_id, MIN(monthly_total) as min_monthly_calls, MAX(last_month_call) as last_call
                     FROM (
                         SELECT customer_id, DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as monthly_total, MAX(created_at) as last_month_call
-                        FROM vw_completed_sessions
+                        FROM monitoring_sessions
                         WHERE status = 2 AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
                         GROUP BY customer_id, month
                     ) AS mstats
@@ -206,8 +194,20 @@ async function getCustomerById(id, filter = 'all') {
         [calls],
         [missedByInterpreters]
     ] = await Promise.all([
-        pool.query(`SELECT * FROM vw_completed_sessions WHERE customer_id = ? ${dateFilter} ORDER BY created_at DESC`, [id]),
-        pool.query(`SELECT * FROM vw_missed_calls WHERE customer_id = ? ${inrDateFilter} ORDER BY missed_call_time DESC`, [id])
+        pool.query(`
+            SELECT ms.*, c.name AS customer_name, c.email AS customer_email, i.name AS interpreter_name, i.email AS interpreter_email
+            FROM monitoring_sessions ms
+            LEFT JOIN customers c ON c.customer_id = ms.customer_id
+            LEFT JOIN interpreter i ON i.interpreter_id = ms.interpreter_id
+            WHERE ms.customer_id = ? ${dateFilter} ORDER BY ms.created_at DESC
+        `, [id]),
+        pool.query(`
+            SELECT inr.*, c.name AS customer_name, c.email AS customer_email, i.name AS interpreter_name, i.email AS interpreter_email
+            FROM interpreter_notification_responses inr
+            LEFT JOIN customers c ON c.customer_id = inr.customer_id
+            LEFT JOIN interpreter i ON i.interpreter_id = inr.interpreter_id
+            WHERE inr.customer_id = ? ${inrDateFilter} ORDER BY inr.missed_call_time DESC
+        `, [id])
     ]);
 
     return { customer, calls, missedByInterpreters };
